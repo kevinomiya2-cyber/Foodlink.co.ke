@@ -1,0 +1,23 @@
+name: FoodLink CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, build/platform-foundation]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm install
+      - name: Build Next.js application
+        run: npm run build

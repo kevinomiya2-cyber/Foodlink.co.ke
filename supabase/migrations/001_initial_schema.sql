@@ -285,9 +285,7 @@ using (rider_id = (select auth.uid()) or exists (
   select 1 from public.orders o join public.vendors v on v.id = o.vendor_id
   where o.id = order_id and (o.customer_id = (select auth.uid()) or v.owner_id = (select auth.uid()))
 ) or (select auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
-create policy "delivery_jobs_rider_update" on public.delivery_jobs for update to authenticated
-using (rider_id = (select auth.uid()))
-with check (rider_id = (select auth.uid()));
+-- Rider status changes are handled through set_delivery_job_status below, not direct table updates.
 
 create policy "supplier_orders_participant_select" on public.supplier_orders for select to authenticated
 using (buyer_id = (select auth.uid()) or supplier_id = (select auth.uid()) or (select auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
@@ -479,3 +477,60 @@ $$;
 revoke all on function public.set_vendor_order_status(uuid, text) from public;
 revoke all on function public.set_vendor_order_status(uuid, text) from anon;
 grant execute on function public.set_vendor_order_status(uuid, text) to authenticated;
+
+create or replace function public.set_delivery_job_status(
+  p_job_id uuid,
+  p_status text
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_rider_id uuid;
+  v_current_status text;
+  v_order_id uuid;
+begin
+  if auth.uid() is null then
+    raise exception 'You must sign in';
+  end if;
+
+  if p_status not in ('at_vendor', 'picked_up', 'delivered') then
+    raise exception 'That delivery status is not allowed';
+  end if;
+
+  select d.rider_id, d.status, d.order_id
+  into v_rider_id, v_current_status, v_order_id
+  from public.delivery_jobs d
+  where d.id = p_job_id
+  for update;
+
+  if not found or v_rider_id <> auth.uid() then
+    raise exception 'Delivery job not found for this rider';
+  end if;
+
+  if (v_current_status = 'assigned' and p_status <> 'at_vendor')
+     or (v_current_status = 'at_vendor' and p_status <> 'picked_up')
+     or (v_current_status = 'picked_up' and p_status <> 'delivered') then
+    raise exception 'Invalid delivery status transition';
+  end if;
+
+  update public.delivery_jobs
+  set status = p_status,
+      picked_up_at = case when p_status = 'picked_up' then now() else picked_up_at end,
+      delivered_at = case when p_status = 'delivered' then now() else delivered_at end,
+      updated_at = now()
+  where id = p_job_id;
+
+  if p_status = 'picked_up' then
+    update public.orders set status = 'picked_up', updated_at = now() where id = v_order_id;
+  elsif p_status = 'delivered' then
+    update public.orders set status = 'delivered', updated_at = now() where id = v_order_id;
+  end if;
+end;
+$$;
+
+revoke all on function public.set_delivery_job_status(uuid, text) from public;
+revoke all on function public.set_delivery_job_status(uuid, text) from anon;
+grant execute on function public.set_delivery_job_status(uuid, text) to authenticated;

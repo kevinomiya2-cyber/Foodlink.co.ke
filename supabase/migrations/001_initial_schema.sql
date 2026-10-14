@@ -266,7 +266,6 @@ create policy "orders_customer_or_vendor_select" on public.orders for select to 
 using (
   customer_id = (select auth.uid())
   or exists (select 1 from public.vendors v where v.id = vendor_id and v.owner_id = (select auth.uid()))
-  or exists (select 1 from public.delivery_jobs d where d.order_id = id and d.rider_id = (select auth.uid()))
   or (select auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
 );
 create policy "order_items_participant_select" on public.order_items for select to authenticated
@@ -341,9 +340,10 @@ begin
     raise exception 'Enter a complete delivery address';
   end if;
 
-  if jsonb_typeof(p_items) is distinct from 'array'
-     or jsonb_array_length(p_items) < 1
-     or jsonb_array_length(p_items) > 50 then
+  if jsonb_typeof(p_items) is distinct from 'array' then
+    raise exception 'Your cart must contain between 1 and 50 line items';
+  end if;
+  if jsonb_array_length(p_items) < 1 or jsonb_array_length(p_items) > 50 then
     raise exception 'Your cart must contain between 1 and 50 line items';
   end if;
 

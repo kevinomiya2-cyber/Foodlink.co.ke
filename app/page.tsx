@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 const services = [
   { number: "01", title: "Order great food", description: "Discover meals from local chefs, restaurants, and independent food businesses.", icon: "🍲" },
   { number: "02", title: "Find a chef", description: "Connect with culinary professionals for private dining, events, and catering.", icon: "👨🏽‍🍳" },
@@ -8,11 +10,12 @@ const services = [
 ];
 
 export default function Home() {
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <main>
       <nav className="nav wrap">
         <a className="brand" href="/" aria-label="FoodLink home"><span className="brand-mark">F</span><span>food<span className="brand-accent">link</span><small>ONE NETWORK. EVERY PLATE.</small></span></a>
-        <div className="nav-links"><a href="/marketplace">Browse food</a><a href="#how-it-works">How it works</a><a href="#ecosystem">Our network</a><a href="/login">Sign in</a><a className="nav-cta" href="/login">Create account <span>↗</span></a></div>
+        <button className="menu-toggle" type="button" aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "✕" : "☰"} <span>{menuOpen ? "Close" : "Menu"}</span></button><div className={`nav-links ${menuOpen ? "mobile-open" : ""}`}><a onClick={() => setMenuOpen(false)} href="/marketplace">Browse food</a><a onClick={() => setMenuOpen(false)} href="#how-it-works">How it works</a><a onClick={() => setMenuOpen(false)} href="#ecosystem">Our network</a><a onClick={() => setMenuOpen(false)} href="/login">Sign in</a><a className="nav-cta" onClick={() => setMenuOpen(false)} href="/login">Create account <span>↗</span></a></div>
       </nav>
 
       <section className="hero wrap">

@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { type FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const [nextPath, setNextPath] = useState("/dashboard");
+  const [confirmationError, setConfirmationError] = useState(false);
   const [mode, setMode] = useState<"login" | "signup">("signup");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -15,6 +16,13 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const requestedNext = params.get("next");
+    if (requestedNext && requestedNext.startsWith("/") && !requestedNext.startsWith("//")) setNextPath(requestedNext);
+    setConfirmationError(params.get("error") === "confirmation");
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -54,8 +62,7 @@ export default function LoginPage() {
           password,
         });
         if (authError) throw authError;
-        const next = searchParams.get("next");
-        router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard");
+        router.push(nextPath);
         router.refresh();
       }
     } catch (caught) {
@@ -99,7 +106,7 @@ export default function LoginPage() {
           <h2 style={{ fontFamily: "Georgia, serif", fontSize: 38, fontWeight: 500, margin: "12px 0" }}>{mode === "signup" ? "Join the network." : "Welcome back."}</h2>
           <p style={{ color: "#667067", lineHeight: 1.7, marginBottom: 24 }}>{mode === "signup" ? "Create an account to get started. New accounts begin as customers; partner roles are approved separately." : "Sign in to continue to your FoodLink dashboard."}</p>
 
-          {searchParams.get("error") === "confirmation" && <p role="alert" style={{ background: "#f8e8df", padding: 12, borderRadius: 7, fontSize: 13 }}>Your confirmation link could not be verified. Try signing in or request a fresh confirmation email.</p>}
+          {confirmationError && <p role="alert" style={{ background: "#f8e8df", padding: 12, borderRadius: 7, fontSize: 13 }}>Your confirmation link could not be verified. Try signing in or request a fresh confirmation email.</p>}
           {message && <p role="status" style={{ background: "#e8f0e3", padding: 12, borderRadius: 7, fontSize: 13, lineHeight: 1.6 }}>{message}</p>}
           {error && <p role="alert" style={{ background: "#f8e8df", padding: 12, borderRadius: 7, fontSize: 13, lineHeight: 1.6 }}>{error}</p>}
 

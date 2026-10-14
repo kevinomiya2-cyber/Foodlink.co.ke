@@ -37,6 +37,7 @@ export default function MarketplaceClient({ items, databaseMessage }: { items: M
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [orderId, setOrderId] = useState("");
+  const demoMode = databaseMessage.includes("[DEMO_CATALOG]");
 
   const vendorIds = Array.from(new Set(cart.map(line => line.item.vendors?.id).filter(Boolean)));
   const subtotal = useMemo(() => cart.reduce((sum, line) => sum + line.item.price_kes * line.quantity, 0), [cart]);
@@ -77,6 +78,20 @@ export default function MarketplaceClient({ items, databaseMessage }: { items: M
     }
     if (address.trim().length < 8) {
       setError("Enter a complete delivery address, including estate, road, or building.");
+      return;
+    }
+
+    if (demoMode) {
+      const lines = cart.map(line => `• ${line.quantity} × ${line.item.name} = ${formatKes(line.item.price_kes * line.quantity)}`);
+      const message = [
+        "Hello FoodLink, I would like to enquire about an order:",
+        ...lines,
+        `Food subtotal: ${formatKes(subtotal)}`,
+        `Delivery address: ${address.trim()}`,
+        note.trim() ? `Note: ${note.trim()}` : "",
+        "Please confirm availability, final price, delivery fee and payment instructions."
+      ].filter(Boolean).join("\n");
+      window.location.href = `https://wa.me/254768395450?text=${encodeURIComponent(message)}`;
       return;
     }
 
@@ -143,11 +158,11 @@ export default function MarketplaceClient({ items, databaseMessage }: { items: M
               <div style={{ display: "flex", alignItems: "center", gap: 9 }}><button type="button" aria-label={"Remove one " + line.item.name} onClick={() => changeQuantity(line.item.id, -1)} style={{ width: 27, height: 27, border: "1px solid #dedacd", borderRadius: 5, background: "white" }}>−</button><span style={{ fontSize: 13 }}>{line.quantity}</span><button type="button" aria-label={"Add one " + line.item.name} onClick={() => changeQuantity(line.item.id, 1)} style={{ width: 27, height: 27, border: "1px solid #dedacd", borderRadius: 5, background: "white" }}>+</button></div>
             </div>)}
             <div style={{ display: "flex", justifyContent: "space-between", padding: "16px 0", fontSize: 16 }}><strong>Food subtotal</strong><strong>{formatKes(subtotal)}</strong></div>
-            <p style={{ fontSize: 11, lineHeight: 1.6, color: "#856a3a" }}>Delivery pricing and online payments are not enabled yet. This creates an unpaid order for the vendor to review.</p>
+            <p style={{ fontSize: 11, lineHeight: 1.6, color: "#856a3a" }}>{demoMode ? "Preview menu: send your enquiry on WhatsApp. We will confirm availability, delivery and payment before you pay." : "Online M-Pesa payment is not enabled yet. Orders are saved for vendor review."}</p>
             <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginTop: 16 }}>Delivery address<textarea required minLength={8} value={address} onChange={e => setAddress(e.target.value)} placeholder="Estate, road, building, town…" rows={3} style={{ display: "block", width: "100%", boxSizing: "border-box", marginTop: 7, padding: 11, border: "1px solid #dedacd", borderRadius: 6, font: "inherit", fontSize: 13, background: "#fffdf8" }} /></label>
             <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginTop: 13 }}>Note to the chef (optional)<textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Allergies, directions, or other notes" rows={2} maxLength={1000} style={{ display: "block", width: "100%", boxSizing: "border-box", marginTop: 7, padding: 11, border: "1px solid #dedacd", borderRadius: 6, font: "inherit", fontSize: 13, background: "#fffdf8" }} /></label>
             {error && <p role="alert" style={{ marginTop: 12, padding: 10, borderRadius: 6, background: "#f8e8df", fontSize: 12, lineHeight: 1.5 }}>{error}</p>}
-            <button type="button" disabled={busy} onClick={placeOrder} style={{ width: "100%", marginTop: 15, padding: 13, border: 0, borderRadius: 6, background: "#344b38", color: "white", fontWeight: 700, opacity: busy ? 0.6 : 1, cursor: busy ? "wait" : "pointer" }}>{busy ? "Placing order…" : "Place unpaid order"}</button>
+            <button type="button" disabled={busy} onClick={placeOrder} style={{ width: "100%", marginTop: 15, padding: 13, border: 0, borderRadius: 6, background: "#344b38", color: "white", fontWeight: 700, opacity: busy ? 0.6 : 1, cursor: busy ? "wait" : "pointer" }}>{busy ? "Placing order…" : demoMode ? "Enquire via WhatsApp" : "Place order"}</button>
             <button type="button" onClick={() => { setCart([]); setError(""); setSuccess(""); }} style={{ width: "100%", marginTop: 8, padding: 10, border: 0, background: "transparent", color: "#667067", cursor: "pointer", fontSize: 12 }}>Clear cart</button>
           </aside>}
         </section>

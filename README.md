@@ -1,30 +1,29 @@
-# FOODLINK website starter
+# FOODLINK · One Network. Every Plate.
 
-A responsive Next.js + TypeScript marketing/marketplace frontend prototype for FOODLINK, the Kenyan food-industry network.
+FoodLink is a Kenyan food-tech platform concept connecting customers, chefs and food businesses, suppliers, and delivery partners, beginning in Nairobi and Kiambu.
+
+## Current build
+- Responsive marketing homepage.
+- Supabase email signup/sign-in and protected account dashboard.
+- Live marketplace reads active vendors and available menu items from Supabase.
+- Cart and server-validated order creation for a single vendor per order.
+- Vendor order management: accept, prepare, mark ready, or cancel.
+- Supabase schema with Row Level Security for profiles, vendors, menu items, supplier products, food orders, delivery jobs, supplier orders, and ratings.
+
+## Deploy and configure
+1. Install Node.js 20+ and run `npm install`.
+2. Copy `.env.example` to `.env.local` and add the Supabase URL and publishable/anon key.
+3. Apply `supabase/migrations/001_initial_schema.sql` in a new Supabase project. If an earlier version of 001 was already applied, run only `supabase/migrations/002_ordering_and_delivery.sql`.
+4. Configure the Supabase Auth Site URL and `/auth/callback` redirect.
+5. Add the environment variables to the Vercel project and redeploy.
+6. Follow [docs/platform-foundation.md](docs/platform-foundation.md) to test.
+
+## Not production-ready yet
+This is a staged MVP. Orders are created as unpaid; online payment, M-Pesa Daraja, configurable delivery pricing, automatic rider assignment, rider and supplier workflows, admin tools, notifications, refunds, and full end-to-end testing remain unfinished. Do not accept real payments until those pieces and deployment checks are complete.
 
 ## Run locally
-
-1. Install Node.js 20+.
-2. Extract this folder and open a terminal inside it.
-3. Run `npm install`.
-4. Run `npm run dev`.
-5. Open `http://localhost:3000`.
-
-## Current status
-
-This is a frontend prototype, not a production marketplace. The meal listings and prices are demo content, and links are placeholders. Login, customer checkout, provider dashboards, supplier purchasing, rider dispatch, Supabase data, and M-Pesa payments are not connected yet. Do not accept real payments or upload sensitive customer documents through this prototype.
-
-## Recommended next build steps
-
-1. Create a Supabase project and configure environment variables.
-2. Implement Supabase Auth and role-based profiles.
-3. Add vendor and menu tables with Row Level Security policies.
-4. Replace sample meal data with live database queries.
-5. Build cart, order creation, order status, and admin moderation.
-6. Integrate M-Pesa Daraja using server-side routes and verified callbacks.
-7. Deploy to Vercel after testing security and mobile responsiveness.
-
-## Brand direction
-
-FOODLINK · ONE NETWORK. EVERY PLATE.
-Palette: ink black/green, warm cream, muted gold. Launch geography: Nairobi and Kiambu.
+```bash
+npm install
+npm run dev
+```
+Open http://localhost:3000.

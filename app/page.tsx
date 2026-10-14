@@ -27,7 +27,7 @@ export default function Home() {
     <main>
       <nav className="nav wrap">
         <a className="brand" href="#" aria-label="FoodLink home"><span className="brand-mark">F</span><span>food<span className="brand-accent">link</span><small>ONE NETWORK. EVERY PLATE.</small></span></a>
-        <div className="nav-links"><a href="#how-it-works">How it works</a><a href="#ecosystem">Our network</a><a className="nav-cta" href="#early-access">Get early access <span>↗</span></a></div>
+        <div className="nav-links"><a href="/marketplace">Browse food</a><a href="#how-it-works">How it works</a><a href="#ecosystem">Our network</a><a href="/login">Sign in</a><a className="nav-cta" href="#early-access">Get early access <span>↗</span></a></div>
       </nav>
 
       <section className="hero wrap">
@@ -35,7 +35,7 @@ export default function Home() {
           <div className="eyebrow"><span className="pulse" /> BUILT FOR KENYA'S FOOD ECONOMY</div>
           <h1>Every plate has a story.<br /><em>Let's connect it.</em></h1>
           <p className="hero-text">FoodLink brings customers, chefs, food businesses, suppliers, and delivery partners into one connected food ecosystem.</p>
-          <div className="hero-actions"><a className="button button-gold" href="#early-access">Join the early access list <span>↗</span></a><a className="text-link" href="#ecosystem">Explore the network <span>↓</span></a></div>
+          <div className="hero-actions"><a className="button button-gold" href="#early-access">Join the early access list <span>↗</span></a><a className="text-link" href="/marketplace">Browse the marketplace <span>↗</span></a></div>
           <div className="hero-proof"><div className="avatar-stack"><span>K</span><span>🍳</span><span>🥑</span><span>+</span></div><p><strong>Made for the people behind every meal.</strong><br />Starting in Nairobi and Kiambu, Kenya.</p></div>
         </div>
         <div className="hero-art" role="img" aria-label="Illustration of a beautifully prepared meal">

@@ -45,19 +45,20 @@ export default function MarketplaceClient({ items, databaseMessage }: { items: M
 
   function addItem(item: MarketplaceItem) {
     if (!item.vendors?.id) return;
+    const currentVendors = Array.from(new Set(cart.map(line => line.item.vendors?.id).filter(Boolean)));
+    if (currentVendors.length && !currentVendors.includes(item.vendors.id)) {
+      setError("For now, one order can contain food from one business. Finish or clear this cart before choosing another vendor.");
+      return;
+    }
     setError("");
     setSuccess("");
     setOrderId("");
-    setCart(current => {
-      const currentVendors = Array.from(new Set(current.map(line => line.item.vendors?.id).filter(Boolean)));
-      if (currentVendors.length && !currentVendors.includes(item.vendors!.id)) {
-        setError("For now, one order can contain food from one business. Finish this cart before choosing another vendor.");
-        return current;
-      }
-      const found = current.find(line => line.item.id === item.id);
-      if (found) return current.map(line => line.item.id === item.id ? { ...line, quantity: Math.min(100, line.quantity + 1) } : line);
-      return [...current, { item, quantity: 1 }];
-    });
+    const found = cart.find(line => line.item.id === item.id);
+    if (found) {
+      setCart(cart.map(line => line.item.id === item.id ? { ...line, quantity: Math.min(100, line.quantity + 1) } : line));
+    } else {
+      setCart([...cart, { item, quantity: 1 }]);
+    }
   }
 
   function changeQuantity(itemId: string, delta: number) {

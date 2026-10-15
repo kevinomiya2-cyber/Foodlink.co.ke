@@ -66,7 +66,7 @@ export default function DashboardPage() {
       </div>}
       {role === "chef" && vendorName && <VendorOrders initialOrders={orders} />}
       {role === "chef" && !vendorName && !loading && <div style={{ marginTop: 32, padding: 22, background: "#fffdf8", border: "1px solid #e6e2d7", borderRadius: 12 }}><h2 style={{ fontFamily: "Georgia, serif", fontSize: 24, fontWeight: 500 }}>Set up your food business</h2><p style={{ color: "#667067", lineHeight: 1.7, fontSize: 13 }}>Your chef account has no vendor profile yet. A FoodLink administrator must approve and activate your business.</p></div>}
-      <p style={{ marginTop: 32, display: "flex", gap: 18, flexWrap: "wrap" }}><Link href="/marketplace" style={{ color: "#a97b2c", fontWeight: 700 }}>Browse marketplace ↗</Link><Link href="/menu" style={{ color: "#a97b2c", fontWeight: 700 }}>Explore sample menu ↗</Link><Link href="/" style={{ color: "#a97b2c", fontWeight: 700 }}>← Return to homepage</Link></p>
+      <p style={{ marginTop: 32, display: "flex", gap: 18, flexWrap: "wrap" }}><Link href="/marketplace" style={{ color: "#a97b2c", fontWeight: 700 }}>Browse marketplace ↗</Link><Link href="/orders" style={{ color: "#a97b2c", fontWeight: 700 }}>My orders ↗</Link><Link href="/menu" style={{ color: "#a97b2c", fontWeight: 700 }}>Explore sample menu ↗</Link><Link href="/" style={{ color: "#a97b2c", fontWeight: 700 }}>← Return to homepage</Link></p>
     </section>
   </main>;
 }

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { collection, getDocs, limit, query, where } from "firebase-admin/firestore";
 import MarketplaceClient, { type MarketplaceItem } from "./MarketplaceClient";
 import { getAdminDb } from "@/lib/firebase/admin";
 
@@ -21,7 +20,7 @@ export default async function MarketplacePage() {
   let databaseMessage = "These sample dishes and prices are for preview only. Ask FoodLink to confirm availability, price and delivery.";
   try {
     const db = getAdminDb();
-    const snap = await getDocs(query(collection(db, "menuItems"), where("isAvailable", "==", true), limit(60)));
+    const snap = await db.collection("menuItems").where("isAvailable", "==", true).limit(60).get();
     for (const itemDoc of snap.docs) {
       const d = itemDoc.data();
       if (!d.vendorId || typeof d.priceKes !== "number") continue;

@@ -9,7 +9,7 @@ import { getFirebaseAuth, getFirebaseDb } from "@/lib/firebase/client";
 type OrderLine = { itemName?: string; item_name?: string; quantity: number; lineTotalKes?: number; line_total_kes?: number };
 type Order = { id: string; orderNumber?: number; status?: string; subtotalKes?: number; deliveryFeeKes?: number; serviceFeeKes?: number; totalKes?: number; deliveryAddress?: string; paymentStatus?: string; createdAt?: { toDate?: () => Date }; vendorName?: string; items?: OrderLine[]; order_items?: OrderLine[] };
 
-function kes(value: number) { return new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(value || 0); }
+function kes(value: number | undefined) { return new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(value || 0); }
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);

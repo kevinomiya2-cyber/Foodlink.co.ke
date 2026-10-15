@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getFirebaseAuth } from "@/lib/firebase/client";
 
 type OrderItem = { item_name: string; quantity: number; line_total_kes: number };
 export type VendorOrder = {
@@ -40,9 +41,11 @@ export default function VendorOrders({ initialOrders }: { initialOrders: VendorO
     setError("");
     setMessage("");
     try {
+      const token = await getFirebaseAuth().currentUser?.getIdToken();
+      if (!token) throw new Error("Your session expired. Sign in again.");
       const response = await fetch(`/api/vendor/orders/${orderId}/status`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ status }),
       });
       const result = await response.json();

@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       const inputLine = requested[index]!;
       const d = snap.data();
       if (!snap.exists || !d || d.isAvailable !== true || d.vendorId !== input.vendorId || typeof d.priceKes !== "number") return null;
-      return { menuItemId: snap.id, itemName: String(d.name || "Food item"), quantity: inputLine.quantity, unitPriceKes: d.priceKes, lineTotalKes: d.priceKes * inputLine.quantity };
+      return { menuItemId: snap.id, itemName: String(d.name || "Food item"), item_name: String(d.name || "Food item"), quantity: inputLine.quantity, unitPriceKes: d.priceKes, unit_price_kes: d.priceKes, lineTotalKes: d.priceKes * inputLine.quantity, line_total_kes: d.priceKes * inputLine.quantity };
     });
     if (lines.some(x => x === null)) return NextResponse.json({ error: "A menu item is no longer available. Refresh the marketplace and try again." }, { status: 400 });
     const subtotal = lines.reduce((sum, line) => sum + line!.lineTotalKes, 0);
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       vendorName: String(vendorSnap.data()?.businessName || "FoodLink partner"),
       status: "pending", subtotalKes: subtotal, deliveryFeeKes: 0, serviceFeeKes: 0, totalKes: subtotal,
       deliveryAddress: input.deliveryAddress.trim(), customerNote: typeof input.customerNote === "string" ? input.customerNote.slice(0, 1000) : "",
-      paymentStatus: "unpaid", paymentProvider: null, paymentReference: null, items: lines,
+      paymentStatus: "unpaid", paymentProvider: null, paymentReference: null, items: lines, order_items: lines,
       createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp()
     };
     await orderRef.set(order);

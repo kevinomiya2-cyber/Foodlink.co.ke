@@ -1,29 +1,51 @@
-# FOODLINK · One Network. Every Plate.
+# FoodLink
 
-FoodLink is a Kenyan food-tech platform concept connecting customers, chefs and food businesses, suppliers, and delivery partners, beginning in Nairobi and Kiambu.
+FoodLink is a Kenyan food-tech platform connecting customers, chefs and food businesses, suppliers, and delivery partners.
 
-## Current build
-- Responsive marketing homepage.
-- Supabase email signup/sign-in and protected account dashboard.
-- Live marketplace reads active vendors and available menu items from Supabase.
-- Cart and server-validated order creation for a single vendor per order.
-- Vendor order management: accept, prepare, mark ready, or cancel.
-- Supabase schema with Row Level Security for profiles, vendors, menu items, supplier products, food orders, delivery jobs, supplier orders, and ratings.
+## Stack
 
-## Deploy and configure
-1. Install Node.js 20+ and run `npm install`.
-2. Copy `.env.example` to `.env.local` and add the Supabase URL and publishable/anon key.
-3. Apply `supabase/migrations/001_initial_schema.sql` in a new Supabase project. If an earlier version of 001 was already applied, run only `supabase/migrations/002_ordering_and_delivery.sql`.
-4. Configure the Supabase Auth Site URL and `/auth/callback` redirect.
-5. Add the environment variables to the Vercel project and redeploy.
-6. Follow [docs/platform-foundation.md](docs/platform-foundation.md) to test.
+- Next.js 15 + React 19
+- Firebase Authentication
+- Cloud Firestore
+- Firebase Admin SDK for trusted server-side order processing
+- Vercel hosting
+- Safaricom Daraja planned for M-Pesa STK Push after business onboarding
 
-## Not production-ready yet
-This is a staged MVP. Orders are created as unpaid; online payment, M-Pesa Daraja, configurable delivery pricing, automatic rider assignment, rider and supplier workflows, admin tools, notifications, refunds, and full end-to-end testing remain unfinished. Do not accept real payments until those pieces and deployment checks are complete.
+## Firebase setup
 
-## Run locally
-```bash
-npm install
-npm run dev
-```
-Open http://localhost:3000.
+1. Create a Firebase project at https://console.firebase.google.com/.
+2. In **Authentication → Sign-in method**, enable **Email/Password**.
+3. In **Firestore Database**, create a database in production mode.
+4. Add a Web App under **Project settings → General → Your apps** and copy its config into the `NEXT_PUBLIC_FIREBASE_*` environment variables.
+5. In **Project settings → Service accounts**, create a private key. Store its full JSON as the server-only `FIREBASE_SERVICE_ACCOUNT_KEY` environment variable in Vercel. Never commit the key or expose it with a `NEXT_PUBLIC_` prefix.
+6. Deploy the Firestore rules from `firestore.rules` in Firebase Console → Firestore → Rules, or run `firebase deploy --only firestore:rules` after installing and logging in to the Firebase CLI.
+7. Add the same environment variables to Vercel Production, Preview, and Development as needed, then redeploy.
+
+## Local development
+
+- Install Node.js 20+
+- Run `npm install`
+- Copy `.env.example` to `.env.local` and replace all placeholders
+- Run `npm run dev`
+
+## Data model
+
+- `profiles/{uid}`: name, email, phone, role, verification state
+- `vendors/{vendorId}`: ownerId, business details, active state
+- `menuItems/{itemId}`: vendorId, name, category, priceKes, photo URL, preparation time, availability
+- `orders/{orderId}`: customerId, vendorId, vendorOwnerId, item snapshots, totals, address, status, payment status
+- `supplierProducts/{productId}`: supplierId, name, unit, price, stock and availability
+- `partnerApplications/{applicationId}`: userId, requested role, business/contact details and review status
+- `deliveryJobs/{jobId}`: orderId, riderId, status and delivery notes
+
+## Security notes
+
+- Public signup always creates a customer account. Users cannot self-assign partner or admin roles.
+- Order creation and price calculations run server-side through Firebase Admin, not from browser-submitted prices.
+- Firestore rules block browser-side writes to orders and reserve role changes, vendor activation, and delivery-job assignment for administrators.
+- Admin claims must be set only by a trusted server-side administrative process.
+- Never store M-Pesa consumer secrets, passkeys, or Firebase service-account credentials in client code.
+
+## Launch status
+
+Firebase replaces Supabase in this branch. This is not yet a verified production launch: configure the Firebase project, deploy rules, and run build plus end-to-end tests. M-Pesa STK Push, payment callback validation, notifications, admin provisioning, rider dispatch, and operational testing remain before accepting live payments or promising delivery.

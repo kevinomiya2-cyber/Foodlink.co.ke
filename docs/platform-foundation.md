@@ -1,49 +1,66 @@
 # FoodLink platform foundation
 
-## What is implemented
-- Supabase Auth browser/server helpers, confirmation callback, sign-in/sign-up, sign-out, and protected dashboard.
-- Marketplace that reads active vendors and available menu items from Supabase.
-- Cart and checkout that creates unpaid orders through a database function which recalculates prices on the server.
-- Vendor order list and restricted status transitions.
-- Database tables and Row Level Security for profiles, vendors, menus, supplier products, food orders, delivery jobs, supplier orders, and ratings.
+## What is in the rebuild branch
 
-## 1. Configure Supabase
-Create a project in Supabase and keep its database password somewhere safe.
+- Supabase Auth helpers, email sign-up/sign-in, confirmation callback, and protected account.
+- Public marketplace with a sample catalogue fallback while no live vendors are approved.
+- Cart and order placement using a database function that recalculates menu prices.
+- Chef menu editor and vendor order fulfilment.
+- Supplier product catalogue with availability controls.
+- Rider workspace with constrained status transitions through a database function.
+- Partner application form and admin application review.
+- Row Level Security for customer, partner, order, supplier, and delivery records.
 
-### If the initial schema has never been run
-Open Supabase Dashboard → SQL Editor, paste and run `supabase/migrations/001_initial_schema.sql`.
+## 1. Create a fresh Supabase project
 
-### If an earlier version of migration 001 has already been run
-Run `supabase/migrations/002_ordering_and_delivery.sql` only. Do not rerun the older migration from the previous version because its table and policy creation statements are not all idempotent.
+Open Supabase Dashboard and create a new project. Keep the database password secure. Then open **SQL Editor** and run, in this exact order:
 
-The second migration adds order placement and vendor status functions, fixes a non-recursive order visibility policy, and removes direct rider updates.
+1. `supabase/migrations/001_initial_schema.sql`
+2. `supabase/migrations/002_ordering_and_delivery.sql`
+3. `supabase/migrations/003_partner_applications.sql`
 
-## 2. Configure Vercel
-In Vercel → FoodLink project → Settings → Environment Variables, add these for Production, Preview, and Development as appropriate:
-- `NEXT_PUBLIC_SUPABASE_URL`: project URL from Supabase Project Settings → API
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: publishable/anon key from Supabase Project Settings → API
+Run all three for a new database. Do not skip migration 003: the partner application form and review screen depend on it.
 
-Redeploy after changing environment variables.
+## 2. Configure environment variables
 
-## 3. Configure Supabase Auth redirects
-In Supabase Authentication URL Configuration:
-- Set Site URL to the exact production website origin.
-- Add the production origin plus `/auth/callback` to Redirect URLs.
-- Add any Vercel preview origin only if you intend to test sign-in there.
+In the website hosting dashboard, add the following to Production, Preview, and Development environments as needed:
 
-## 4. First test
-1. Create a customer account and confirm the email if confirmation is enabled.
-2. Confirm the profile row appears in `public.profiles`.
-3. Create a test vendor profile through an administrator-approved account, set it active, and add an available menu item.
-4. Sign in as a customer, add menu items from one vendor to the cart, and place a test order.
-5. Check `public.orders`, `public.order_items`, and `public.delivery_jobs`.
-6. Sign in as the vendor and test accept → preparing → ready.
+- `NEXT_PUBLIC_SUPABASE_URL`: project URL from Supabase project settings.
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: publishable key (or legacy anon key) from Supabase API settings.
 
-## Security and launch limits
-- New signups are always customers. Do not let users grant themselves chef, rider, supplier, or admin privileges.
-- Role upgrades and vendor activation must be administrator-controlled.
-- Order totals are calculated in the database. Browser-submitted prices are ignored.
-- The current MVP stores orders as unpaid. Delivery fee is set to zero until the launch area's delivery pricing is configured.
-- M-Pesa, automatic rider assignment, notifications, supplier checkout, refunds, dispute management, and production monitoring are not yet complete.
-- Never expose a Supabase service-role key in `NEXT_PUBLIC_*` variables, client code, GitHub, or chat.
-- Do not accept real orders or payments until database setup, deployment, auth redirects, and end-to-end tests pass.
+Never use the Supabase `service_role` key as a public variable. If a server-side integration later needs privileged access, keep that secret in a server-only environment variable and validate every request.
+
+Redeploy after environment changes.
+
+## 3. Configure authentication redirects
+
+In Supabase **Authentication → URL Configuration**:
+
+- Set the Site URL to the exact deployed website origin.
+- Add the deployed origin plus `/auth/callback` to allowed Redirect URLs.
+- Add preview URLs only when they are needed for testing.
+
+## 4. Create the first administrator safely
+
+The admin review interface checks the signed-in user's Supabase Auth `app_metadata.role` for `admin`. A user must not be allowed to set this value through a public signup form. Set it only through a trusted administrator process using the Supabase dashboard or a secured server-side administrative tool. Do not publish service-role credentials.
+
+## 5. First acceptance test
+
+1. Register a customer and confirm email if enabled.
+2. Confirm a matching row exists in `public.profiles`.
+3. Open `/workspace` and `/marketplace`.
+4. Submit a partner application at `/apply`.
+5. Review it at `/admin/applications` using the properly provisioned admin account.
+6. For a chef approval, complete and activate the vendor profile before expecting public listings.
+7. Add a menu item at `/chef/menu` and test customer checkout.
+8. Assign a delivery job to a test rider before testing `/rider`.
+9. Confirm order, order item, and delivery job records in Supabase.
+10. Test denied access: customers must not edit roles, see another customer's order, or access partner/admin tools.
+
+## Launch limits
+
+- M-Pesa is not enabled and order records are unpaid.
+- A live Daraja integration needs the business payment setup, API credentials, HTTPS callback, signature/metadata validation, idempotent callback handling, and reconciliation.
+- Rider assignment and vendor activation require an administrator workflow.
+- Supplier order purchasing, customer order history polish, email notifications, delivery fees, refunds, audit logs, monitoring, backups, and full production testing remain outstanding.
+- Do not accept real orders or payments until all setup and end-to-end tests pass.

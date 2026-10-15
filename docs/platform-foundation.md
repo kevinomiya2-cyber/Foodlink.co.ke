@@ -33,7 +33,7 @@ FoodLink uses Firebase, not Supabase.
 
 ## Security
 
-Public sign-up always assigns the customer role. Partner roles and admin permissions must only be assigned by a trusted process. Orders are created on the server after verifying the Firebase ID token and retrieving menu prices from Firestore. Browser rules deny direct order writes.
+Public sign-up always assigns the customer role. Partner roles and admin permissions must only be assigned by a trusted process. To assign the first admin, set FIREBASE_SERVICE_ACCOUNT_KEY locally to a service-account JSON value and run `node scripts/set-admin-claim.mjs admin@example.com` using the real admin email. Never run this command with an untrusted email. Sign out and sign back in after the claim is set. Orders are created on the server after verifying the Firebase ID token and retrieving menu prices from Firestore. Browser rules deny direct order writes.
 
 Never commit Firebase service-account JSON or put it in a `NEXT_PUBLIC_*` variable.
 

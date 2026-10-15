@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FormEvent,useEffect,useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { addDoc,collection,doc,getDocs,limit,query,serverTimestamp,updateDoc,where } from "firebase/firestore";
+import { addDoc,collection,doc,getDoc,getDocs,limit,query,serverTimestamp,updateDoc,where } from "firebase/firestore";
 import { getFirebaseAuth,getFirebaseDb } from "@/lib/firebase/client";
 
 type Dish={id:string;name:string;description:string;category:string;priceKes:number;imageUrl?:string;preparationMinutes:number;isAvailable:boolean};
@@ -17,7 +17,7 @@ export default function ChefMenuPage(){
   const menu=await getDocs(query(collection(db,"menuItems"),where("vendorId","==",vendor.id)));
   setItems(menu.docs.map(d=>({id:d.id,...d.data()} as Dish)));
  }
- useEffect(()=>onAuthStateChanged(getFirebaseAuth(),async user=>{if(!user){setError("Sign in to manage a menu.");return;}setUid(user.uid);try{const p=await getDocs(query(collection(getFirebaseDb(),"profiles"),where("uid","==",user.uid),limit(1)));let role="customer";if(!p.empty)role=String(p.docs[0].data().role||"customer");else {const {doc,getDoc}=await import("firebase/firestore");const profile=await getDoc(doc(getFirebaseDb(),"profiles",user.uid));role=String(profile.data()?.role||"customer");}if(role!=="chef"){setError("Only approved chef accounts can manage food menus.");return;}await load(user.uid);}catch{setError("Could not load your menu. Check Firebase setup and Firestore rules.");}}),[]);
+ useEffect(()=>onAuthStateChanged(getFirebaseAuth(),async user=>{if(!user){setError("Sign in to manage a menu.");return;}setUid(user.uid);try{const profile=await getDoc(doc(getFirebaseDb(),"profiles",user.uid));const role=String(profile.data()?.role||"customer");if(role!=="chef"){setError("Only approved chef accounts can manage food menus.");return;}await load(user.uid);}catch{setError("Could not load your menu. Check Firebase setup and Firestore rules.");}}),[]);
  async function addDish(e:FormEvent<HTMLFormElement>){e.preventDefault();setBusy(true);setError("");setMessage("");try{const priceValue=Number(price),prep=Number(minutes);if(!Number.isInteger(priceValue)||priceValue<0||!Number.isInteger(prep)||prep<1)throw new Error("Enter a valid price and preparation time.");await addDoc(collection(getFirebaseDb(),"menuItems"),{vendorId,name:name.trim(),description:description.trim(),category,priceKes:priceValue,imageUrl:imageUrl.trim()||"",preparationMinutes:prep,isAvailable:true,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});setName("");setDescription("");setPrice("");setImageUrl("");setMessage("Dish added to your menu.");await load(uid);}catch(e){setError(e instanceof Error?e.message:"Could not save dish. Check your vendor permissions.");}finally{setBusy(false);}}
  async function toggle(d:Dish){try{await updateDoc(doc(getFirebaseDb(),"menuItems",d.id),{isAvailable:!d.isAvailable,updatedAt:serverTimestamp()});setItems(current=>current.map(x=>x.id===d.id?{...x,isAvailable:!d.isAvailable}:x));}catch{setError("Could not update dish availability.");}}
  const field={width:"100%",boxSizing:"border-box" as const,padding:12,marginTop:6,border:"1px solid #dedacd",borderRadius:6,background:"#fffdf8",font:"inherit"};

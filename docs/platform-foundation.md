@@ -13,15 +13,17 @@ FoodLink uses Firebase, not Supabase.
 
 ## First setup
 
-1. Create a Firebase project in https://console.firebase.google.com/.
-2. Enable **Authentication → Sign-in method → Email/Password**.
-3. Create a Cloud Firestore database.
-4. Register a Firebase Web App and copy its config into the `NEXT_PUBLIC_FIREBASE_*` environment variables.
-5. Generate a Firebase service-account private key and store the complete JSON in the server-only `FIREBASE_SERVICE_ACCOUNT_KEY` environment variable in Vercel.
-6. Deploy `firestore.rules` using Firebase Console → Firestore → Rules.
-7. Redeploy the website after configuring the environment variables.
+1. Use the existing Firebase project `foodlink3-3081a` at https://console.firebase.google.com/.
+2. Enable **Authentication → Sign-in method → Email/Password** and **Google**.
+3. Create a Cloud Firestore database if one does not exist.
+4. Register a Firebase Web App and copy its actual config into the `NEXT_PUBLIC_FIREBASE_*` environment variables in Vercel. The project ID is `foodlink3-3081a`; confirm the actual storage bucket and app IDs in Project settings.
+5. Add the production website domain under Authentication → Settings → Authorized domains.
+6. Generate a Firebase service-account private key and store the complete JSON in the server-only `FIREBASE_SERVICE_ACCOUNT_KEY` environment variable in Vercel.
+7. Deploy `firestore.rules` using Firebase Console → Firestore → Rules.
+8. For Android, register package `ke.co.foodlink.app` under Project settings → Your apps, download `google-services.json` into `android/app/`, and add SHA-1/SHA-256 fingerprints for the signing certificate. Re-download the JSON after enabling Google sign-in.
+9. Redeploy the website after configuring the environment variables.
 
-## Firestore collections
+## Android app registration\n\nThe web codebase is Next.js; Firebase Android registration is a separate app entry in the same Firebase project. Use the package name `ke.co.foodlink.app` consistently; Android package names cannot be changed after registration. The Firebase Console must register this app and generate `google-services.json` before an Android build can authenticate. Add the SHA-1/SHA-256 fingerprints of the debug and release signing keys to the Android app settings. Enable Google sign-in in Authentication and download a fresh config file so it contains OAuth client details.\n\n## Firestore collections
 
 - `profiles/{uid}`: full name, email, phone, role, verification status.
 - `vendors/{vendorId}`: owner ID, business name, description, cuisine, active status.

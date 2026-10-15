@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { type FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createUserWithEmailAndPassword, sendEmailVerification, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword, GoogleAuthProvider, sendEmailVerification, signInWithEmailAndPassword, signInWithPopup, updateProfile } from "firebase/auth";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { getFirebaseAuth, getFirebaseDb } from "@/lib/firebase/client";
 
 export default function LoginPage() {
@@ -23,6 +23,41 @@ export default function LoginPage() {
     const requestedNext = params.get("next");
     if (requestedNext && requestedNext.startsWith("/") && !requestedNext.startsWith("//")) setNextPath(requestedNext);
   }, []);
+
+  async function handleGoogleSignIn() {
+    setBusy(true); setMessage(""); setError("");
+    try {
+      const auth = getFirebaseAuth();
+      const db = getFirebaseDb();
+      const credential = await signInWithPopup(auth, new GoogleAuthProvider());
+      const profileRef = doc(db, "profiles", credential.user.uid);
+      const profile = await getDoc(profileRef);
+      if (!profile.exists()) {
+        await setDoc(profileRef, {
+          uid: credential.user.uid,
+          fullName: credential.user.displayName || credential.user.email?.split("@")[0] || "FoodLink customer",
+          email: credential.user.email,
+          phone: "",
+          role: "customer",
+          isVerified: credential.user.emailVerified,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      }
+      router.push(nextPath);
+      router.refresh();
+    } catch (caught) {
+      const code = caught && typeof caught === "object" && "code" in caught ? String((caught as {code:string}).code) : "";
+      const friendly: Record<string,string> = {
+        "auth/popup-closed-by-user": "Google sign-in was cancelled. Try again when ready.",
+        "auth/popup-blocked": "Your browser blocked the Google sign-in window. Allow pop-ups and try again.",
+        "auth/unauthorized-domain": "This website domain is not yet authorized in Firebase Authentication settings.",
+        "auth/operation-not-allowed": "Google sign-in is not enabled in Firebase Authentication yet.",
+        "permission-denied": "Firebase Firestore permissions are not configured yet. Deploy the Firestore rules from the project repository.",
+      };
+      setError(friendly[code] || (caught instanceof Error ? caught.message : "Google sign-in could not be completed. Check Firebase setup and try again."));
+    } finally { setBusy(false); }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -89,6 +124,8 @@ export default function LoginPage() {
           <label style={{ display: "block", fontSize: 13, fontWeight: 600 }}>Password<input required type="password" minLength={8} autoComplete={mode === "signup" ? "new-password" : "current-password"} value={password} onChange={e=>setPassword(e.target.value)} placeholder="At least 8 characters" style={fieldStyle} /></label>
           <button disabled={busy} type="submit" style={{ width: "100%", padding: 15, border: 0, borderRadius: 7, background: "#344b38", color: "white", fontWeight: 700, fontSize: 14, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.7 : 1 }}>{busy ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"} <span style={{ color: "#e2bd76", marginLeft: 8 }}>↗</span></button>
         </form>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0", color: "#858b81", fontSize: 11 }}><span style={{ height: 1, background: "#dedacd", flex: 1 }} />OR CONTINUE WITH<span style={{ height: 1, background: "#dedacd", flex: 1 }} /></div>
+        <button type="button" disabled={busy} onClick={handleGoogleSignIn} style={{ width: "100%", padding: 14, border: "1px solid #dedacd", borderRadius: 7, background: "#fffdf8", color: "#1c241d", fontWeight: 700, fontSize: 14, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.7 : 1 }}>Continue with Google</button>
         <p style={{ textAlign: "center", color: "#667067", fontSize: 13, marginTop: 22 }}>{mode === "signup" ? "Already have an account?" : "New to FoodLink?"}{" "}<button type="button" onClick={()=>{setMode(mode === "signup" ? "login" : "signup");setError("");setMessage("");}} style={{ border: 0, background: "transparent", color: "#a97b2c", fontWeight: 700, cursor: "pointer", font: "inherit" }}>{mode === "signup" ? "Sign in" : "Create account"}</button></p>
         <p style={{ fontSize: 11, lineHeight: 1.6, color: "#858b81", textAlign: "center", marginTop: 28 }}>By continuing, you agree to use FoodLink responsibly. Account creation does not grant chef, supplier, rider, or admin privileges.</p>
       </div></section>

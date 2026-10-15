@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { getFirebaseAuth } from "@/lib/firebase/client";
 
 export type MarketplaceItem = {
   id: string;
@@ -97,9 +98,14 @@ export default function MarketplaceClient({ items, databaseMessage }: { items: M
 
     setBusy(true);
     try {
+      const token = await getFirebaseAuth().currentUser?.getIdToken();
+      if (!token) {
+        window.location.href = "/login?next=%2Fmarketplace";
+        return;
+      }
       const response = await fetch("/api/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           vendorId: vendorIds[0],
           deliveryAddress: address.trim(),

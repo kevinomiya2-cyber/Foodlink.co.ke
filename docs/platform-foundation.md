@@ -1,49 +1,42 @@
 # FoodLink platform foundation
 
-## What is implemented
-- Supabase Auth browser/server helpers, confirmation callback, sign-in/sign-up, sign-out, and protected dashboard.
-- Marketplace that reads active vendors and available menu items from Supabase.
-- Cart and checkout that creates unpaid orders through a database function which recalculates prices on the server.
-- Vendor order list and restricted status transitions.
-- Database tables and Row Level Security for profiles, vendors, menus, supplier products, food orders, delivery jobs, supplier orders, and ratings.
+FoodLink uses Firebase, not Supabase.
 
-## 1. Configure Supabase
-Create a project in Supabase and keep its database password somewhere safe.
+## Services
 
-### If the initial schema has never been run
-Open Supabase Dashboard → SQL Editor, paste and run `supabase/migrations/001_initial_schema.sql`.
+- Firebase Authentication: customer sign-up and sign-in.
+- Cloud Firestore: profiles, vendor listings, menus, orders, suppliers, partner applications and delivery records.
+- Firebase Admin SDK: server-side token verification and trusted order processing.
+- Next.js: website and application pages.
+- Vercel: hosting and deployment.
+- Safaricom Daraja: planned M-Pesa STK Push integration, pending business payment setup.
 
-### If an earlier version of migration 001 has already been run
-Run `supabase/migrations/002_ordering_and_delivery.sql` only. Do not rerun the older migration from the previous version because its table and policy creation statements are not all idempotent.
+## First setup
 
-The second migration adds order placement and vendor status functions, fixes a non-recursive order visibility policy, and removes direct rider updates.
+1. Create a Firebase project in https://console.firebase.google.com/.
+2. Enable **Authentication → Sign-in method → Email/Password**.
+3. Create a Cloud Firestore database.
+4. Register a Firebase Web App and copy its config into the `NEXT_PUBLIC_FIREBASE_*` environment variables.
+5. Generate a Firebase service-account private key and store the complete JSON in the server-only `FIREBASE_SERVICE_ACCOUNT_KEY` environment variable in Vercel.
+6. Deploy `firestore.rules` using Firebase Console → Firestore → Rules.
+7. Redeploy the website after configuring the environment variables.
 
-## 2. Configure Vercel
-In Vercel → FoodLink project → Settings → Environment Variables, add these for Production, Preview, and Development as appropriate:
-- `NEXT_PUBLIC_SUPABASE_URL`: project URL from Supabase Project Settings → API
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: publishable/anon key from Supabase Project Settings → API
+## Firestore collections
 
-Redeploy after changing environment variables.
+- `profiles/{uid}`: full name, email, phone, role, verification status.
+- `vendors/{vendorId}`: owner ID, business name, description, cuisine, active status.
+- `menuItems/{itemId}`: vendor ID, dish, price, photo, preparation time, availability.
+- `orders/{orderId}`: customer and vendor IDs, item snapshots, totals, delivery address, status and payment status.
+- `supplierProducts/{productId}`: supplier ID, item, unit, price, stock and availability.
+- `partnerApplications/{applicationId}`: applicant ID, requested role and review status.
+- `deliveryJobs/{jobId}`: order ID, rider ID and delivery status.
 
-## 3. Configure Supabase Auth redirects
-In Supabase Authentication URL Configuration:
-- Set Site URL to the exact production website origin.
-- Add the production origin plus `/auth/callback` to Redirect URLs.
-- Add any Vercel preview origin only if you intend to test sign-in there.
+## Security
 
-## 4. First test
-1. Create a customer account and confirm the email if confirmation is enabled.
-2. Confirm the profile row appears in `public.profiles`.
-3. Create a test vendor profile through an administrator-approved account, set it active, and add an available menu item.
-4. Sign in as a customer, add menu items from one vendor to the cart, and place a test order.
-5. Check `public.orders`, `public.order_items`, and `public.delivery_jobs`.
-6. Sign in as the vendor and test accept → preparing → ready.
+Public sign-up always assigns the customer role. Partner roles and admin permissions must only be assigned by a trusted process. Orders are created on the server after verifying the Firebase ID token and retrieving menu prices from Firestore. Browser rules deny direct order writes.
 
-## Security and launch limits
-- New signups are always customers. Do not let users grant themselves chef, rider, supplier, or admin privileges.
-- Role upgrades and vendor activation must be administrator-controlled.
-- Order totals are calculated in the database. Browser-submitted prices are ignored.
-- The current MVP stores orders as unpaid. Delivery fee is set to zero until the launch area's delivery pricing is configured.
-- M-Pesa, automatic rider assignment, notifications, supplier checkout, refunds, dispute management, and production monitoring are not yet complete.
-- Never expose a Supabase service-role key in `NEXT_PUBLIC_*` variables, client code, GitHub, or chat.
-- Do not accept real orders or payments until database setup, deployment, auth redirects, and end-to-end tests pass.
+Never commit Firebase service-account JSON or put it in a `NEXT_PUBLIC_*` variable.
+
+## Not yet production-ready
+
+The Firebase migration is being prepared on the `rebuild/firebase-v1` branch. A build and full end-to-end tests are still required. M-Pesa STK Push, callback verification, admin partner management, automated rider assignment, supplier purchasing, notifications, refunds, backups and operational monitoring need further work before accepting live payments.

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 const roleCards: Record<string, { title: string; description: string; href: string; action: string }[]> = {
   customer: [
     { title: "Explore food", description: "Browse meals and discover local food businesses.", href: "/marketplace", action: "Open marketplace" },
+    { title: "My orders", description: "Check order history, order status and payment status.", href: "/orders", action: "View orders" },
     { title: "Apply as a partner", description: "Join as a chef, supplier or delivery rider. Applications are reviewed.", href: "/apply", action: "Start application" },
   ],
   chef: [
